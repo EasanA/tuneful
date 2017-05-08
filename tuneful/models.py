@@ -13,6 +13,7 @@ class Song(Base):
     id = Column(Integer, primary_key=True)
     
     file = relationship("File", uselist=False, backref="song")
+    
     def as_dictionary(self):
         song = {
             "id": self.id,
@@ -24,13 +25,13 @@ class Song(Base):
         return song
         
 class File(Base):
-    __tablename__ = "songs"
+    __tablename__ = "files"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(128))
     
-    song_id = Column(Integer, ForeignKey('song.id'))
-    song = relationship("Song", backref="file")
+    song_id = Column(Integer, ForeignKey('songs.id'))
+    #song = relationship("Song", backref="file")
      
     def as_dictionary(self):
         file = {
