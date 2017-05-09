@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String, Sequence, ForeignKey
 from sqlalchemy.orm import relationship
 
 from tuneful import app
-from .database import Base, engine
+from .database import Base, engine, session
 
 class Song(Base):
     __tablename__ = "songs"
@@ -18,8 +18,8 @@ class Song(Base):
         song = {
             "id": self.id,
             "file" : {
-                "id": "",
-                "name" :  ""  
+                "id" : self.file.id,
+                "name" : self.file.name
             }
         }
         return song
@@ -31,7 +31,6 @@ class File(Base):
     name = Column(String(128))
     
     song_id = Column(Integer, ForeignKey('songs.id'))
-    #song = relationship("Song", backref="file")
      
     def as_dictionary(self):
         file = {

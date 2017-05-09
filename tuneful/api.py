@@ -16,5 +16,7 @@ from .utils import upload_path
 @decorators.accept("application/json")
 def songs_get():
     """ Get a list of songs """
-    data = json.dumps([])
+    songs = session.query(models.Song).all()
+    
+    data = json.dumps([song.as_dictionary() for song in songs])
     return Response(data, 200, mimetype="application/json")
