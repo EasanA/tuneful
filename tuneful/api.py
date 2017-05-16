@@ -33,10 +33,10 @@ def songs_get():
     data = json.dumps([song.as_dictionary() for song in songs])
     return Response(data, 200, mimetype="application/json")
     
-@app.route("/api/posts", methods=["POST"])
+@app.route("/api/songs", methods=["POST"])
 @decorators.accept("application/json")
 @decorators.require("application/json")
-def posts_post():
+def songs_post():
     """ Add a new post """
     data = request.json
 
@@ -49,13 +49,30 @@ def posts_post():
         return Response(json.dumps(data), 422, mimetype="application/json")
 
     # Add the post to the database
-    song = models.Song(file=data["file"],)
+    song = models.Song(song_file_id=data["file"]["id"],)
     session.add(song)
     session.commit()
 
     # Return a 201 Created, containing the post as JSON and with the
     # Location header set to the location of the post
     data = json.dumps(song.as_dictionary())
-    headers = {"Location": url_for("get_songs")}
+    headers = {"Location": url_for("songs_get")}
     return Response(data, 201, headers=headers,
                     mimetype="application/json")
+
+@app.route("/api/songs/<int:id>", methods=["DELETE"])
+@decorators.accept("application/json")
+def delete_song(id):
+    song = session.query(models.Song).get(id)
+    
+    if not song:
+        message = "Could not find song with id {}".format(id)
+        data = json.dumps({"message": message})
+        return Response(data, 404, mimetype="application/json")
+        
+    session.delete(song)
+    session.commit()
+        
+    message = "Successfully deleted song with id {}".format(id)
+    data = json.dumps({"message": message})
+    return Response(data, 200, mimetype="application/json")

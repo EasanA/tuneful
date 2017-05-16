@@ -41,11 +41,15 @@ class TestAPI(unittest.TestCase):
         """ Getting songs from a populated database """
         file1 = models.File(name= "song1")
         file2 = models.File(name= "song2")
-        song1 = models.Song(file = file1)
-        song2 = models.Song(file = file2)
+        
+        session.add_all([file1, file2])
+        session.commit()
+        
+        song1 = models.Song(song_file_id = file1.id)
+        song2 = models.Song(song_file_id = file2.id)
         
 
-        session.add_all([file1, file2, song1, song2])
+        session.add_all([song1, song2])
         session.commit()
         
         response = self.client.get("/api/songs", headers=[("Accept", "application/json")])
@@ -64,14 +68,14 @@ class TestAPI(unittest.TestCase):
         
     def test_post_song(self):
         """ Posting a new song """
-        file1 = models.File(name= "song1")
+        file = models.File(name= "song1")
         
-        session.add(file1)
+        session.add(file)
         session.commit()
-        
+
         data = {
             "file": {
-            "id": file1.id
+            "id": file.id
                 }
         }
 
@@ -87,14 +91,34 @@ class TestAPI(unittest.TestCase):
                          "/api/songs")
 
         data = json.loads(response.data.decode("ascii"))
-        self.assertEqual(data["id"], file1.id)
+        self.assertEqual(data["id"], file.id)
         self.assertEqual(data["file"]["name"], "song1")
 
         songs = session.query(models.Song).all()
         self.assertEqual(len(songs), 1)
 
         song = songs[0]
-        self.assertEqual(song.file.name, "song1")
+        self.assertEqual(song.song_file_id, file.id)
         
+    def test_delete_song(self):
+        file = models.File(name= "song1")
+        
+        session.add(file)
+        session.commit()
+
+        song = models.Song(song_file_id = file.id)
+        
+        session.add(song)
+        session.commit()
+
+        response = self.client.delete("/api/songs/{}".format(song.id), headers=[("Accept", "application/json")])
+        
+        session.delete(file)
+        session.commit()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "application/json")
+        posts = session.query(models.Song).all()
+        self.assertEqual(len(posts), 0)
 if __name__ == "__main__":
     unittest.main()
