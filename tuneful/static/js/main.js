@@ -38,6 +38,7 @@ Tuneful.prototype.onSongClicked = function(event) {
     // Called when we load a new song
     this.pause();
     var song = $(event.target);
+    alert("Clicked song " + song.data("path"));
     // Reload the waveform from the path data attribute
     this.wavesurfer.load(song.data("path"));
 };

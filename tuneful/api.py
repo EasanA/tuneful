@@ -28,9 +28,11 @@ song_schema = {
 @decorators.accept("application/json")
 def songs_get():
     """ Get a list of songs """
+    print("getting songs ...")
     songs = session.query(models.Song).all()
 
     data = json.dumps([song.as_dictionary() for song in songs])
+    print(data)
     return Response(data, 200, mimetype="application/json")
     
 @app.route("/api/songs", methods=["POST"])
@@ -136,4 +138,5 @@ def file_post():
     file.save(upload_path(filename))
 
     data = db_file.as_dictionary()
+    print(data)
     return Response(json.dumps(data), 201, mimetype="application/json")

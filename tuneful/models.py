@@ -16,11 +16,13 @@ class Song(Base):
     
     def as_dictionary(self):
         song_file_info = session.query(File).filter_by(id=self.song_file_id).first()
+        song_dict = song_file_info.as_dictionary()
         song = {
             "id": self.id,
             "file" : {
                 "id" : song_file_info.id,
-                "name" : song_file_info.name
+                "name" : song_file_info.name,
+                "path": song_dict["path"]
             }
         }
         return song
