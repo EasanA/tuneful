@@ -76,3 +76,64 @@ def delete_song(id):
     message = "Successfully deleted song with id {}".format(id)
     data = json.dumps({"message": message})
     return Response(data, 200, mimetype="application/json")
+    
+@app.route("/api/songs/<int:id>", methods=["PUT"])
+@decorators.accept("application/json")
+@decorators.require("application/json")
+def update_song(id):
+    """ Updating a single song """
+
+    # check if the song exists, if not return a 404 with a helpful message
+    song = session.query(models.Song).get(id)
+    if not song:
+        message = "Could not find song with id {}".format(id)
+        data = json.dumps({"message": message})
+        return Response(data, 404, mimetype="application/json")
+
+    data = request.json
+
+    # check that the JSON supplied is valid
+    # if not, return a 422 Unprocessable Entity
+    try:
+        validate(data, song_schema)
+    except ValidationError as error:
+        data = {"message": error.message}
+        return Response(json.dumps(data), 422, mimetype="application/json")
+
+    song.song_file_id=data["file"]["id"]
+    session.commit()
+    
+    # return an OK 200, containing the song as JSON with the
+    # location header set to the location of the post
+    data = json.dumps(song.as_dictionary())
+    headers = {"Location": url_for("songs_get")}
+    return Response(
+        data, 200, headers=headers,
+        mimetype="application/json"
+    )
+    
+@app.route("/uploads/<filename>", methods=["GET"])
+def uploaded_file(filename):
+    return send_from_directory(upload_path(), filename)
+    
+@app.route("/api/files", methods=["POST"])
+@decorators.require("multipart/form-data")
+@decorators.accept("application/json")
+def file_post():
+    file = request.files.get("file")
+    print(request.files)
+    print(file)
+    print(file.name)
+    if not file:
+        data = {"message": "Could not find file data"}
+        return Response(json.dumps(data), 422, mimetype="application/json")
+
+    filename = secure_filename(file.filename)
+    print(filename)
+    db_file = models.File(name=filename)
+    session.add(db_file)
+    session.commit()
+    file.save(upload_path(filename))
+
+    data = db_file.as_dictionary()
+    return Response(json.dumps(data), 201, mimetype="application/json")
